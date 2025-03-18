@@ -1,0 +1,9 @@
+{
+  "name": "zeekjs-supervisor",
+  "devDependencies": {
+    "prettier": "3.5.3"
+  },
+  "dependencies": {
+    "yaml": "^2.7.0"
+  }
+}
