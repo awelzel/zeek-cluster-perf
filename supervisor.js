@@ -89,6 +89,8 @@ const makeZeekNode = (cfg, cfgNode, type, name, manager) => {
   let defaultInterface = cfg?.zeek?.cluster?.default?.interface;
   let ignoreChecksums = cfg?.zeek?.cluster?.default?.ignore_checksums;
   let defaultScripts = cfg?.zeek?.cluster?.default?.scripts || [];
+  let defaultBareMode = cfg?.zeek?.cluster?.default?.bare_mode || false;
+
   let spoolDir = cfg?.zeek?.cluster?.config?.spool_dir || ".";
 
   let host = cfgNode.host || defaultHost;
@@ -107,12 +109,25 @@ const makeZeekNode = (cfg, cfgNode, type, name, manager) => {
   let command = Binaries.zeek;
   let args = [];
 
+  let bareMode = defaultBareMode;
+  if (cfgNode.hasOwnProperty("bare_mode")) {
+    bareMode = cfgNode.bareMode;
+  }
+
+  if (bareMode) {
+    args = args.concat(["-b"]);
+  }
+
   // Worker specific logic.
   if (type == NodeType.Worker) {
     let interface = cfgNode.interface || defaultInterface;
-    args = args.concat(["-i", interface]);
+    if (interface !== null && interface !== undefined) {
+      args = args.concat(["-i", interface]);
+    }
 
-    if (ignoreChecksums) args = args.concat(["-C"]);
+    if (ignoreChecksums) {
+      args = args.concat(["-C"]);
+    }
   }
 
   // Handle scripts as args.
