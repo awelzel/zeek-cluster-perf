@@ -65,7 +65,14 @@ event Cluster::Bench::test_start() {
 global received = 0;
 global last_tick_received = 0;
 
-event Cluster::Bench::test_complete() {
+# Wait to observe all test_done() from workers before shutting down.
+global workers_test_done_seen = 0;
+
+event Cluster::Bench::test_done(name: string, stats: Cluster::Bench::TestStats) {
+    if (  Cluster::nodes[name]$node_type == Cluster::WORKER )
+        ++workers_test_done_seen;
+
+    if ( workers_test_done_seen == Cluster::Bench::workers_total )
 	Cluster::Bench::publish_test_done();
 }
 
@@ -78,7 +85,6 @@ event potential_scanner(ci: conn_info, established: bool, reverse: bool, filtrat
 }
 
 hook Cluster::Bench::stats_tick(now_ts: double, last_ts: double, td: double) {
-
 	local diff = received - last_tick_received;
 	local per_second = diff / td;
 
