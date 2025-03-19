@@ -16,7 +16,7 @@ export ZEEKPATH
 ZEEK_CLUSTER_CONFIG=${ZEEK_CLUSTER_CONFIG:-${DIR}/cluster-config.yaml}
 export ZEEK_CLUSTER_CONFIG
 
-TESTS="potential-scanner ping-pong broadcast"
+TESTS="logging potential-scanner ping-pong broadcast"
 BACKENDS="broker zeromq"
 # lowrate or highrate
 CONFIGS="lowrate highrate"

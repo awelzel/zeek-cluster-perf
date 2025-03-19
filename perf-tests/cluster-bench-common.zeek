@@ -12,15 +12,14 @@ event zeek_init() {
 @if ( test_config == "lowrate" )
 const tick_interval = 2 msec;
 const publishes_per_tick = 3;
+const total_publishes = 20000;
 @endif
 
 @if ( test_config == "highrate" )
 const tick_interval = 2 msec;
 const publishes_per_tick = 30;
-@endif
-
-## Make configurable?
 const total_publishes = 100000;
+@endif
 
 const test_backend = getenv("TEST_BACKEND");
 
@@ -97,6 +96,7 @@ export {
 
 	const stats_tick_interval = 3.0sec &redef;
 
+	global loggers_total = 0;
 	global workers_total = 0;
 	global proxies_total = 0;
 }
@@ -124,18 +124,21 @@ global wait_for_map: table[Cluster::NodeType] of set[Cluster::NodeType] = {
 
 };
 
-event zeek_init() {
+event zeek_init() &priority=5 {
 	Cluster::subscribe(topic);
 
 	local wait_for = wait_for_map[Cluster::local_node_type()];
 
 	for ( name, n in Cluster::nodes ) {
 
-		if ( n$node_type == Cluster::WORKER )
-			++workers_total;
+		if ( n$node_type == Cluster::LOGGER )
+			++loggers_total;
 
 		if ( n$node_type == Cluster::PROXY )
 			++proxies_total;
+
+		if ( n$node_type == Cluster::WORKER )
+			++workers_total;
 
 		# Don't wait for ourselves
 		if ( name == Cluster::node )
@@ -150,10 +153,7 @@ event zeek_init() {
 
 		add nodes_up_pending[name];
 
-		if ( n$node_type == Cluster::WORKER || n$node_type == Cluster::PROXY ) {
-			add nodes_test_done_pending[name];
-		}
-
+		add nodes_test_done_pending[name];
 	}
 
 	# At least for the manager this is correct.
@@ -370,3 +370,4 @@ event zeek_done() {
 module GLOBAL;
 
 const dummy_cid = conn_id($orig_h=127.0.0.1, $orig_p=1234/tcp, $resp_h=127.0.0.2, $resp_p=80/tcp, $proto=6);
+const dummy_cid2 = conn_id($orig_h=10.0.0.1, $orig_p=12345/udp, $resp_h=10.0.0.2, $resp_p=53/tcp, $proto=17);

@@ -23,6 +23,7 @@ zeek:
       - port: 17104/tcp
     loggers:
       - port: 17201/tcp
+      - port: 17202/tcp
     workers:
       - cpu: 4
       - cpu: 5

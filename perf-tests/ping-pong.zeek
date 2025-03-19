@@ -105,6 +105,16 @@ hook Cluster::Bench::stats_tick(now_ts: double, last_ts: double, td: double) {
 }
 @endif
 
+##############
+### LOGGER ###
+##############
+@if ( Cluster::local_node_type() == Cluster::LOGGER)
+event Cluster::Bench::test_done(name: string, stats: Cluster::Bench::TestStats) {
+	# Loggers do not do anything, just finish with the first node to complete.
+	Cluster::Bench::publish_test_done();
+}
+@endif
+
 
 ###############
 ### MANAGER ###
