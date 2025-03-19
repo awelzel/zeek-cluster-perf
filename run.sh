@@ -9,8 +9,6 @@ fi
 DIR="$(cd "$(dirname "$0")" && pwd)"
 RESULT_DIR=${DIR}/results/$(date +%Y%m%d-%H%M%S)
 
-BACKENDS="broker zeromq"
-TESTS="potential-scanner ping-pong broadcast"
 
 ZEEKPATH=${DIR}/perf-tests:$(zeek-config --zeekpath)
 export ZEEKPATH
@@ -18,8 +16,11 @@ export ZEEKPATH
 ZEEK_CLUSTER_CONFIG=${ZEEK_CLUSTER_CONFIG:-${DIR}/cluster-config.yaml}
 export ZEEK_CLUSTER_CONFIG
 
-RUNS=3
+TESTS="potential-scanner ping-pong broadcast"
+BACKENDS="broker zeromq"
+# lowrate or highrate
 CONFIGS="lowrate highrate"
+RUNS=3
 
 for t in ${TESTS}; do
     for c in ${CONFIGS}; do

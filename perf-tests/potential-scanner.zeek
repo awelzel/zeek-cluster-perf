@@ -56,6 +56,15 @@ event tick() {
 event Cluster::Bench::test_start() {
 	event tick();
 }
+
+global last_total = 0;
+hook Cluster::Bench::stats_tick(now_ts: double, last_ts: double, td: double) {
+	local diff = total - last_total;
+	local per_second = diff / td;
+
+	print fmt("publishes per second: %.3f (%s / %s) total %s", per_second, diff, td, total);
+	last_total = total;
+}
 @endif
 
 #############
