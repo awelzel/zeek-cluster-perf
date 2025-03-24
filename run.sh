@@ -7,8 +7,6 @@ if ! zeek --version; then
 fi
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
-RESULT_DIR=${DIR}/results/$(date +%Y%m%d-%H%M%S)
-
 
 ZEEKPATH=${DIR}/perf-tests:$(zeek-config --zeekpath)
 export ZEEKPATH
@@ -16,11 +14,16 @@ export ZEEKPATH
 ZEEK_CLUSTER_CONFIG=${ZEEK_CLUSTER_CONFIG:-${DIR}/cluster-config.yaml}
 export ZEEK_CLUSTER_CONFIG
 
-TESTS="logging logging-many potential-scanner ping-pong broadcast"
-BACKENDS="broker zeromq"
-# lowrate or highrate
-CONFIGS="lowrate highrate"
-RUNS=3
+SUFFIX=$(basename -s .yml $(basename -s .yaml "${ZEEK_CLUSTER_CONFIG}"))
+RESULT_DIR=${DIR}/results/$(date +%Y%m%d-%H%M%S)-${SUFFIX}
+
+mkdir -p $RESULT_DIR
+cp $ZEEK_CLUSTER_CONFIG $RESULT_DIR
+
+TESTS=${TESTS:-"logging logging-many potential-scanner broadcast ping-pong"}
+BACKENDS=${BACKENDS:-"broker zeromq"}
+CONFIGS=${CONFIGS:-"lowrate highrate"}
+RUNS=${RUNS:-3}
 
 for t in ${TESTS}; do
     for c in ${CONFIGS}; do
@@ -30,11 +33,28 @@ for t in ${TESTS}; do
                 mkdir -p "${test_dir}"
                 (
                 cd "${test_dir}";
+
+                if [ "${b}" == "nats" ]; then
+                    nats_pid=$(pgrep nats-server)
+                    nats_ticks_start=$(awk '{ print $14 + $15 }' </proc/"${nats_pid}"/stat)
+                fi
+
                 export TEST_BACKEND=${b};
                 export TEST_CONFIG=${c}
                 export ZEEK_EXTRA_SCRIPTS=${t}
 
                 zeek "${DIR}/supervisor.js" 2>&1 | tee -a output
+
+                if [ "${b}" == "nats" ]; then
+                    nats_ticks_end=$(awk '{ print $14 + $15 }' </proc/"${nats_pid}"/stat)
+
+                    clk_ticks=$(getconf CLK_TCK)
+                    nats_cpu_time=$(awk "BEGIN { print (${nats_ticks_end} - ${nats_ticks_start}) / ${clk_ticks} }")
+
+                    echo -n "JSON_RESULT={\"node\": \"nats-server\", \"node_type\": \"Cluster::NATS\", " | tee -a output
+                    echo "\"stats\": {\"proc_stats\": {\"user_system_time\": ${nats_cpu_time}}}}" | tee -a output
+
+                fi
                 )
             done
         done

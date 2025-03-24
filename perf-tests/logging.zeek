@@ -107,7 +107,6 @@ event Cluster::Bench::test_done(name: string, stats: Cluster::Bench::TestStats) 
 		++workers_test_done_seen;
 
 	if ( workers_test_done_seen == Cluster::Bench::workers_total ) {
-		print "DONE", "FLUSH";
 		Log::flush(LOG);
 		Cluster::Bench::publish_test_done();
 	}

@@ -23,7 +23,7 @@ const total_publishes = 100000;
 
 const test_backend = getenv("TEST_BACKEND");
 
-@if ( test_backend != "zeromq" && test_backend != "broker" )
+@if ( test_backend != "zeromq" && test_backend != "broker" && test_backend != "nats" )
 event zeek_init() {
 	Reporter::fatal(fmt("Invalid test_backend '%s'", test_backend));
 	exit(1);
@@ -33,6 +33,11 @@ event zeek_init() {
 @if ( test_backend == "zeromq" )
 @load frameworks/cluster/backend/zeromq/connect
 redef Cluster::Backend::ZeroMQ::proxy_io_threads = 2;
+@endif
+
+@if ( test_backend == "nats" )
+@load-plugin Zeek::Cluster_Backend_NATS
+@load frameworks/cluster/backend/nats/connect
 @endif
 
 @if ( test_backend == "broker" )
