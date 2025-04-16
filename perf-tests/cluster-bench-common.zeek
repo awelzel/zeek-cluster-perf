@@ -42,7 +42,7 @@ redef Cluster::Backend::ZeroMQ::proxy_io_threads = 2;
 
 @if ( test_backend == "broker" )
 redef Broker::disable_ssl = T;  # SSL makes stuff slow.
-redef Broker::peer_buffer_size = 128*1024;
+redef Broker::peer_buffer_size = 512*1024;
 @endif
 
 
@@ -104,6 +104,8 @@ export {
 	global loggers_total = 0;
 	global workers_total = 0;
 	global proxies_total = 0;
+
+	global test_started = F;
 }
 
 
@@ -179,7 +181,7 @@ event Cluster::node_up(name: string, id: string) {
 
 }
 
-global test_started = F;
+global sent_test_started = F;
 
 event Cluster::Bench::ready(name: string, id: string) {
 
@@ -194,13 +196,13 @@ event Cluster::Bench::ready(name: string, id: string) {
 	# print fmt("Node '%s' is ready", name);
 	delete nodes_ready_pending[name];
 
-	if ( ! test_started && |nodes_ready_pending| == 0 ) {
+	if ( ! sent_test_started && |nodes_ready_pending| == 0 ) {
 		print "All nodes ready, go go go!";
 		Cluster::publish(topic, Cluster::Bench::test_start);
 
 		# Prepare locally, too.
 		event Cluster::Bench::test_start();
-		test_started = T;
+		sent_test_started = T;
 	}
 }
 
@@ -264,8 +266,10 @@ event do_stats_tick() {
 }
 
 global proc_stats_start: ProcStats;
-event Cluster::Bench::test_start() {
+event Cluster::Bench::test_start() &priority=100 {
 	proc_stats_start = get_proc_stats();
+
+	test_started = T;
 
 	schedule stats_tick_interval { do_stats_tick() };
 }
