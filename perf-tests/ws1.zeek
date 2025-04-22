@@ -11,7 +11,7 @@ global ws_topic = "cluster.bench.websocket.ws1";
 
 event zeek_init()
 	{
-	total_publishes = 10000;
+	total_publishes = 30000;
 	}
 
 ##############

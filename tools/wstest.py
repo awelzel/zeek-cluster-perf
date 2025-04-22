@@ -69,7 +69,7 @@ class TestClient:
 
     def hello_v1(self, topics: list[str]):
         self.send_json([self.__own_topic] + topics[:])
-        ack = self.recv_json(timeout=1.0)
+        ack = self.recv_json(timeout=30.0)
         assert "type" in ack, repr(ack)
         assert ack["type"] == "ack"
         assert "endpoint" in ack, repr(ack)
@@ -94,14 +94,15 @@ class TestClient:
         return self.__name
 
 
-def connect(name: str, url: Optional[str] = None) -> TestClient:
+def connect(name: str, url: Optional[str] = None, **kwargs) -> TestClient:
     """
     Connect to a WebSocket server and return a TestClient instance.
     """
     if url is None:
         url = WS4_URL_V1
 
-    cc = websockets.sync.client.connect(url)
+    cc = websockets.sync.client.connect(url, **kwargs, ping_interval=None,
+                                        ping_timeout=None, close_timeout=100)
     return TestClient(name, cc)
 
 

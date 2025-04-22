@@ -2,6 +2,7 @@
 #
 # Just send messages as quickly as possible.
 import argparse
+import time
 import json
 import os
 import sys
@@ -20,11 +21,21 @@ def run (args):
             ev = wstest.build_event_v1(args.topic,
                                        "Cluster::Bench::WebSocket::ping", [i, args.name])
             c.send_json(ev)
+            # Yield to give the background thread
+            # some time to process.
+            # try:
+            #    d = c.recv_json(timeout=0.00001)
+            #    print("WHAT", d)
+            #except TimeoutError:
+            #    pass
+
             i = i + 1
 
+        print("Sending bye!")
         ev = wstest.build_event_v1(args.topic,
                                    "Cluster::Bench::WebSocket::bye", [args.name])
         c.send_json(ev)
+        print("CLOSING!")
         c.close()
         print("SENT", i)
 
