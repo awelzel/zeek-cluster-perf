@@ -74,11 +74,11 @@ global last_tick_received = 0;
 global workers_test_done_seen = 0;
 
 event Cluster::Bench::test_done(name: string, stats: Cluster::Bench::TestStats) {
-    if (  Cluster::nodes[name]$node_type == Cluster::WORKER )
-        ++workers_test_done_seen;
+	if (  Cluster::nodes[name]$node_type == Cluster::WORKER )
+		++workers_test_done_seen;
 
-    if ( workers_test_done_seen == Cluster::Bench::workers_total )
-	Cluster::Bench::publish_test_done();
+	if ( workers_test_done_seen == Cluster::Bench::workers_total )
+		Cluster::Bench::publish_test_done();
 }
 
 hook Cluster::Bench::prepare_test_done(stats: Cluster::Bench::TestStats) {
@@ -103,9 +103,14 @@ hook Cluster::Bench::stats_tick(now_ts: double, last_ts: double, td: double) {
 ### LOGGER ###
 ##############
 @if ( Cluster::local_node_type() == Cluster::LOGGER)
+global workers_test_done_seen = 0;
+
 event Cluster::Bench::test_done(name: string, stats: Cluster::Bench::TestStats) {
-	# Loggers do not do anything, just finish with the first node to complete.
-	Cluster::Bench::publish_test_done();
+	++workers_test_done_seen;
+
+	# Loggers do not do anything, just finish together with all workers.
+	if ( workers_test_done_seen == Cluster::Bench::workers_total )
+		Cluster::Bench::publish_test_done();
 }
 @endif
 
