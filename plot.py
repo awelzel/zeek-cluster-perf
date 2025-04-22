@@ -20,6 +20,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("results_dir")
     parser.add_argument("--output", type=argparse.FileType("w"), default="-")
+    parser.add_argument("--csv", type=str, default=None)
 
     args = parser.parse_args()
 
@@ -74,24 +75,34 @@ def main():
     df.rename(columns=renames, inplace=True)
     df["max_rss_mb"] = df.max_rss / 1024.0 / 1024.0
 
+
+    if args.csv:
+        df.to_csv(args.csv)
+
     grouped1 = df.groupby([df.test, df.config, df.backend, df.run, df.node_type])
 
     grouped2 = grouped1.agg({
         "real_time": ["max", "count"],
         "user_time": ["sum"],
         "system_time": ["sum"],
-        "user_system_time": ["sum"],
+        "user_system_time": ["sum", "min", "max"],
         "max_rss_mb": ["sum"],
     })
 
 
 
     agged1 = grouped2.groupby(["test", "config", "backend", "node_type"]).agg({
-        ("real_time", "max"): ["max", "count"],
+        ("real_time", "max"): ["max", "mean", "std", "count"],
         ("user_system_time", "sum"): [
             "mean",
-            # "min",
+            "std",
             # "max"
+        ],
+        ("user_system_time", "min"): [
+            "min",
+        ],
+        ("user_system_time", "max"): [
+            "max",
         ],
         ("max_rss_mb", "sum"): [
             "mean",
