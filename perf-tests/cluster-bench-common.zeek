@@ -12,14 +12,16 @@ event zeek_init() {
 @if ( test_config == "lowrate" )
 const tick_interval = 2 msec;
 const publishes_per_tick = 3;
-const total_publishes = 20000;
+global total_publishes = 100000;
 @endif
 
 @if ( test_config == "highrate" )
 const tick_interval = 2 msec;
 const publishes_per_tick = 30;
-const total_publishes = 100000;
+global total_publishes = 100000;
 @endif
+
+# redef Log::default_writer = Log::WRITER_NONE;
 
 const test_backend = getenv("TEST_BACKEND");
 
