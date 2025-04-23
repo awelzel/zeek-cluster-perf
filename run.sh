@@ -17,8 +17,22 @@ export ZEEK_CLUSTER_CONFIG
 SUFFIX=$(basename -s .yml $(basename -s .yaml "${ZEEK_CLUSTER_CONFIG}"))
 RESULT_DIR=${DIR}/results/$(date +%Y%m%d-%H%M%S)-${SUFFIX}
 
+if [ -n "${RESULT_DIR_SUFFIX:-}" ]; then
+    RESULT_DIR="${RESULT_DIR}-${RESULT_DIR_SUFFIX}"
+fi
+
 mkdir -p $RESULT_DIR
 cp $ZEEK_CLUSTER_CONFIG $RESULT_DIR
+
+echo "=== zeek" >> "$RESULT_DIR/info.txt"
+which zeek >> "$RESULT_DIR/info.txt" 2>&1
+echo "=== zeek --version" >> "$RESULT_DIR/info.txt"
+zeek --version >> "$RESULT_DIR/info.txt" 2>&1
+echo "=== zeek cluster config ${ZEEK_CLUSTER_CONFIG}" >> "$RESULT_DIR/info.txt"
+cat "${ZEEK_CLUSTER_CONFIG}" >> "$RESULT_DIR/info.txt"
+echo "=== env" >> "$RESULT_DIR/info.txt"
+env | grep -E 'ZEEK|PATH|USER[^=]*=.*' >> "$RESULT_DIR/info.txt" 2>&1
+
 
 TESTS=${TESTS:-"logging logging-many potential-scanner broadcast ping-pong"}
 BACKENDS=${BACKENDS:-"broker zeromq"}
